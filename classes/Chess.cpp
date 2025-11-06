@@ -151,7 +151,7 @@ void Chess::FENtoBoard(const std::string& fen) {
         square->setBit(placed);
         index += 1;
     }
-    std::cout << "Castling: " << castling_rights << " En Pasant: " << en_passant_rights << " Remaining Board_info: " << board_info << std::endl;
+    // std::cout << "Castling: " << castling_rights << " En Pasant: " << en_passant_rights << " Remaining Board_info: " << board_info << std::endl;
 }
 
 bool Chess::actionForEmptyHolder(BitHolder &holder)
