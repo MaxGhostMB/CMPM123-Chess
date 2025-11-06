@@ -69,36 +69,32 @@ void Chess::FENtoBoard(const std::string& fen) {
     ChessPiece piece;
     int player;
 
-    // for future implementation
-    bool turnIndicator = false;
-    bool castle_encountered = false;
-    std::string castling_rights;
-    bool en_passant_encountered = false;
-    std::string en_passant_rights;
+    // for future implentation
+    std::string board_info;
     int active_player;
-    
+    std::string castling_rights;
+    std::string en_passant_rights;
+
+    if (fen.find(' ')) {
+        size_t first_space = fen.find(' ');
+        std::string placement = fen.substr(0, first_space);
+
+        std::istringstream iss(fen.substr(first_space + 1));
+        std::string turn, castling, enpassant, halfmove, fullmove;
+
+        iss >> turn >> castling >> enpassant >> halfmove >> fullmove;
+
+        // active player
+        active_player = (turn == "w") ? 0 : 1;
+        // castling rights
+        castling_rights = (castling == "-") ? "-" : castling;
+        // en passant
+        en_passant_rights = (enpassant == "-") ? "-" : enpassant;
+    }
     for (char f : fen) {
         // so that any FEN string is allowed 
         if (f == ' ') {
-            turnIndicator = true;
-            continue;
-        }
-        if (turnIndicator) {
-            if (f == 'w') {
-                active_player = 0;
-            } else {
-                active_player = 1;
-            }
-
-            if ((f == 'K' || f == 'Q' || f == 'k' || f == 'q' )
-                && !castle_encountered) {
-                // fen.at(f)
-                continue;
-                
-            } else {
-                castling_rights = "-";
-            }
-            continue;
+            break;
         }
 
         int placement = index ^ 56; // flip board to start from whites POV
@@ -155,6 +151,7 @@ void Chess::FENtoBoard(const std::string& fen) {
         square->setBit(placed);
         index += 1;
     }
+    std::cout << "Castling: " << castling_rights << " En Pasant: " << en_passant_rights << " Remaining Board_info: " << board_info << std::endl;
 }
 
 bool Chess::actionForEmptyHolder(BitHolder &holder)
