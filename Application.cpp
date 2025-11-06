@@ -66,6 +66,16 @@ namespace ClassGame {
                         game = new Chess();
                         game->setUpBoard();
                     }
+                    char FEN_buffer[256] = ""; // Buffer to store the input text 
+                    if (ImGui::InputText("Set up FEN string", FEN_buffer, sizeof(FEN_buffer))) {
+                        game = new Chess();
+                        game->setUpBoard();
+                        Chess * gamepnt = dynamic_cast<Chess*> (game);
+                        if (game) {
+                            gamepnt->FENtoBoard(FEN_buffer);
+                        }
+                        
+                    } 
                 } else {
                     ImGui::Text("Current Player Number: %d", game->getCurrentPlayer()->playerNumber());
                     std::string stateString = game->stateString();
@@ -76,6 +86,10 @@ namespace ClassGame {
                         ImGui::Text("%s", stateString.substr(y*stride,stride).c_str());
                     }
                     ImGui::Text("Current Board State: %s", game->stateString().c_str());
+                    if (ImGui::Button("Start New Chess Game")) { 
+                        game->stopGame();
+                        game = nullptr;
+                    }
                 }
                 ImGui::End();
 

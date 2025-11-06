@@ -19,7 +19,8 @@ char Chess::pieceNotation(int x, int y) const
     Bit *bit = _grid->getSquare(x, y)->bit();
     char notation = '0';
     if (bit) {
-        notation = bit->gameTag() < 128 ? wpieces[bit->gameTag()] : bpieces[bit->gameTag()-128];
+        char n = bit->gameTag();
+        notation = n;// bit->gameTag() < 128  ? wpieces[bit->gameTag()] : bpieces[bit->gameTag()-128];
     }
     return notation;
 }
@@ -47,6 +48,9 @@ void Chess::setUpBoard()
 
     _grid->initializeChessSquares(pieceSize, "boardsquare.png");
     FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+    // FENtoBoard("5k2/8/8/3q4/8/8/5PPP/7K");
+
+    stateString();
 
     startGame();
 }
@@ -61,6 +65,96 @@ void Chess::FENtoBoard(const std::string& fen) {
     // 3: castling availability (KQkq or -)
     // 4: en passant target square (in algebraic notation, or -)
     // 5: halfmove clock (number of halfmoves since the last capture or pawn advance)
+    int index = 0;
+    ChessPiece piece;
+    int player;
+
+    // for future implementation
+    bool turnIndicator = false;
+    bool castle_encountered = false;
+    std::string castling_rights;
+    bool en_passant_encountered = false;
+    std::string en_passant_rights;
+    int active_player;
+    
+    for (char f : fen) {
+        // so that any FEN string is allowed 
+        if (f == ' ') {
+            turnIndicator = true;
+            continue;
+        }
+        if (turnIndicator) {
+            if (f == 'w') {
+                active_player = 0;
+            } else {
+                active_player = 1;
+            }
+
+            if ((f == 'K' || f == 'Q' || f == 'k' || f == 'q' )
+                && !castle_encountered) {
+                // fen.at(f)
+                continue;
+                
+            } else {
+                castling_rights = "-";
+            }
+            continue;
+        }
+
+        int placement = index ^ 56; // flip board to start from whites POV
+        int x = placement % 8;
+        int y = placement / 8;
+        
+        // get correct placement
+        ChessSquare* square = _grid->getSquare(x, y);
+
+        // what is the color
+        if (isupper(f)) {
+            player = 0;
+        } else {
+            player = 1;
+        }
+
+        // what is the piece
+        if (f == 'r' || f == 'R') {
+            piece = Rook;
+        }
+        if (f == 'b' || f == 'B') {
+            piece = Bishop;
+        }
+        if (f == 'n' || f == 'N') {
+            piece = Knight;
+        }
+        if (f == 'q' || f == 'Q') {
+            piece = Queen;
+        }
+        if (f == 'k' || f == 'K') {
+            piece = King;
+        }
+        if (f == 'p' || f == 'P') {
+            piece = Pawn;
+        }
+        // next line
+        if (f == '/') {
+            continue;
+        }
+        // how many empty spaces 
+        if (atoi(&f)) {
+            for (int i = 0; i < atoi(&f); i++) {
+                placement = index ^ 56;
+                square = _grid->getSquareByIndex(placement);
+                square->setBit(nullptr);
+                index += 1;
+            }
+            continue;
+        }
+        // place pieces 
+        Bit* placed = PieceForPlayer((player), piece);
+        placed->setPosition(square->getPosition());
+        placed->setGameTag(f);
+        square->setBit(placed);
+        index += 1;
+    }
 }
 
 bool Chess::actionForEmptyHolder(BitHolder &holder)
@@ -122,10 +216,11 @@ std::string Chess::stateString()
     std::string s;
     s.reserve(64);
     _grid->forEachSquare([&](ChessSquare* square, int x, int y) {
-            s += pieceNotation( x, y );
-        }
-    );
-    return s;}
+        s += pieceNotation(x, y);
+        // std::cout << "X: " << x << " Y: " << y << " owner: " << pieceNotation(x, y) << std::endl;
+    });
+    return s;
+}
 
 void Chess::setStateString(const std::string &s)
 {
