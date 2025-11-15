@@ -52,8 +52,8 @@ void Chess::setUpBoard()
     _grid->initializeChessSquares(pieceSize, "boardsquare.png");
     
     
-    // FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
-    FENtoBoard("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
+    FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+    // FENtoBoard("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
 
     generateAllCurrentMoves(moves, getCurrentPlayer()->playerNumber());
     // std::cout << "size: " << moves.size() << std::endl;
