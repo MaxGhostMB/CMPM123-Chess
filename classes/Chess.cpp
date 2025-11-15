@@ -393,7 +393,7 @@ void Chess::endTurn() {
     } else {
         generateAllCurrentMoves(moves, 0);
     }
-    std::cout << "size: " << moves.size() << std::endl;
+    // std::cout << "size: " << moves.size() << std::endl;
     Game::endTurn();
 }
 
