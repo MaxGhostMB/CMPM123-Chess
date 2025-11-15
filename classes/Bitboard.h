@@ -51,6 +51,11 @@ class BitboardElement {
         return *this;
     }
 
+    BitboardElement& operator^=(const uint64_t other) {
+        _data ^= other;
+        return *this;
+    }
+
     void printBitboard() {
         std::cout << "\n  a b c d e f g h\n";
         for (int rank = 7; rank >= 0; rank--) {

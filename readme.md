@@ -9,4 +9,8 @@ Chess Assignment 2:
 implemented all knight, king and pawn moves including en passant and castling 
 
 FEN string to try to show castling:
-r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R
+"r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R  w - - 0 1"
+"r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R"
+
+and one for fun!
+"8/p7/K1p5/6P1/4N1p1/k5Pn/P3P3/8 w - - 0 1"

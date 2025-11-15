@@ -52,11 +52,16 @@ void Chess::setUpBoard()
     _grid->initializeChessSquares(pieceSize, "boardsquare.png");
     
     
-    FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
-    // FENtoBoard("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
+    // FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+    FENtoBoard("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R");
 
     generateAllCurrentMoves(moves, getCurrentPlayer()->playerNumber());
-    std::cout << "size: " << moves.size() << std::endl;
+    // std::cout << "size: " << moves.size() << std::endl;
+
+    // for (int i = 0; i < moves.size(); i++) {
+    //     std::cout << "From: " << (int)moves[i].from << " To: " << (int)moves[i].to << " Piece: " << (ChessPiece) moves[i].piece << std::endl;
+    // }
+
     startGame();
 }
 
@@ -77,7 +82,7 @@ void Chess::FENtoBoard(const std::string& fen) {
 
     std::string placement = fen;
 
-    if (fen.find(' ')) {
+    if (fen.find(' ') != std::string::npos) {
         size_t first_space = fen.find(' ');
         placement = fen.substr(0, first_space);
 
@@ -358,8 +363,8 @@ bool Chess::canBitMoveFrom(Bit &bit, BitHolder &src)
 
 bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst)
 {
-    ChessSquare* Square_dst = (ChessSquare *)&dst;
-    ChessSquare* Square_src = (ChessSquare *)&src;
+    ChessSquare* Square_dst = dynamic_cast<ChessSquare*>(&dst);
+    ChessSquare* Square_src = dynamic_cast<ChessSquare*>(&src);
     if(Square_dst) {
         int dstIndex = Square_dst->getSquareIndex();
         int srcIndex = Square_src->getSquareIndex();
@@ -472,6 +477,9 @@ void Chess::makeMove(int from, int to, ChessPiece piece, int player) {
             ChessSquare* Oldrook_ = _grid->getSquareByIndex(rfrom);
             Oldrook_->setBit(nullptr);
 
+            uint64_t Rmove = 0ULL | (1ULL << rfrom) | (1ULL << rto);
+            ChessBoard[BoardIndex(Rook, player)] ^= Rmove;
+
             ChessSquare* Newrook_ = _grid->getSquareByIndex(rto);
             Bit* placed = PieceForPlayer(player, Rook);
             placed->setPosition(Newrook_->getPosition());
@@ -484,6 +492,9 @@ void Chess::makeMove(int from, int to, ChessPiece piece, int player) {
             int rto = (player == 0) ? 3 : 59;
             ChessSquare* Oldrook_ = _grid->getSquareByIndex(rfrom);
             Oldrook_->setBit(nullptr);
+
+            uint64_t Rmove = 0ULL | (1ULL << rfrom) | (1ULL << rto);
+            ChessBoard[BoardIndex(Rook, player)] ^= Rmove;
 
             ChessSquare* Newrook_ = _grid->getSquareByIndex(rto);
             Bit* placed = PieceForPlayer(player, Rook);
