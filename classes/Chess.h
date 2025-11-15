@@ -53,7 +53,7 @@ private:
 
     // King
     void getKingmoves();
-    void generateKingmoves(std::vector<BitMove>&, BitboardElement, uint64_t);
+    void generateKingmoves(std::vector<BitMove>&, BitboardElement, uint64_t, int);
     std::vector<BitboardElement> _Kingmoves;
 
     // pawns 
@@ -68,15 +68,33 @@ private:
     //board:
     BitboardElement ChessBoard[12];
     // let 0-5 be white and 6-11 be black
+
     void ClearChessBoards();
     int BoardIndex(ChessPiece, int);
 
     //debug :)
     void PrintChessBoards();
 
-    
+    // Pawn helpers 
+    uint64_t horizontalNeighbors(uint64_t bb);
+    int enPassantSquare = -1;
 
-    BitboardElement board;
+    // Castling
+    bool Kingsmoved[2] = {false, false};
+    /* Rook: 
+        queen side:
+            white: [0] aka player
+            black: [1]
+        king side: 
+            white: [2] aka player + 2
+            black: [3]
+    */
+    bool Rooksmoved[4] = {false, false, false, false};
+    uint64_t rankMask = 0x00000000000000FFULL;
+
+    // sides of the board
+    const uint64_t FILE_A = 0x0101010101010101ULL;
+    const uint64_t FILE_H = 0x8080808080808080ULL;
 
     Grid* _grid;
 };
