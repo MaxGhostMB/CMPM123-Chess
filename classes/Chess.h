@@ -3,8 +3,28 @@
 #include "Bitboard.h"
 #include "Game.h"
 #include "Grid.h"
+#include "MagicBitboards.h"
+
+#define WHITE 1
+#define BLACK -1
 
 constexpr int pieceSize = 80;
+
+enum ChessBoardIndex
+{
+    WhitePawn,
+    WhiteKnight,
+    WhiteBishop,
+    WhiteRook,
+    WhiteQueen,
+    WhiteKing,
+    BlackPawn,
+    BlackKnight,
+    BlackBishop,
+    BlackRook,
+    BlackQueen,
+    BlackKing
+};
 
 class Chess : public Game
 {
@@ -63,6 +83,11 @@ private:
     std::vector<BitboardElement> _WhitePawnmoves;
     std::vector<BitboardElement> _BlackPawnmoves;
 
+    void generateBishopmoves(std::vector<BitMove>&, BitboardElement, uint64_t, uint64_t);
+    void generateRookmoves(std::vector<BitMove>&, BitboardElement, uint64_t, uint64_t);
+    void generateQueenmoves(std::vector<BitMove>&, BitboardElement, uint64_t, uint64_t);
+    
+
     std::vector<BitMove> moves;
 
     //board:
@@ -71,6 +96,7 @@ private:
 
     void ClearChessBoards();
     int BoardIndex(ChessPiece, int);
+    int ArrIndex(int);
 
     //debug :)
     void PrintChessBoards();
@@ -95,6 +121,8 @@ private:
     // sides of the board
     const uint64_t FILE_A = 0x0101010101010101ULL;
     const uint64_t FILE_H = 0x8080808080808080ULL;
+
+    int _currentplayer;
 
     Grid* _grid;
 };
