@@ -8,6 +8,9 @@
 #define WHITE 1
 #define BLACK -1
 
+#define negInfite -1000000
+#define posInfite 1000000
+
 constexpr int pieceSize = 80;
 
 enum ChessBoardIndex
@@ -41,6 +44,8 @@ public:
 
     void endTurn() override;
 
+    bool gameHasAI() override { return true; }
+
     void stopGame() override;
 
     Player *checkForWinner() override;
@@ -62,7 +67,7 @@ private:
     // set up bitboards for king, knight and pawns
     // generate their moves
     // 
-    void generateAllCurrentMoves(std::vector<BitMove>&, int);
+    std::vector<BitMove> generateAllCurrentMoves(std::string&, int);
 
     void makeMove(int, int, ChessPiece, int);
 
@@ -93,8 +98,10 @@ private:
     //board:
     BitboardElement ChessBoard[12];
     // let 0-5 be white and 6-11 be black
+    BitboardElement ChessState[13];
 
     void ClearChessBoards();
+    void ClearChessState();
     int BoardIndex(ChessPiece, int);
     int ArrIndex(int);
 
@@ -125,4 +132,10 @@ private:
     int _currentplayer;
 
     Grid* _grid;
+
+    // AI stuff
+
+    void updateAI() override;
+    int negamax(std::string& state, int depth, int alpha, int beta, int playerColor);
+    int evaluateBoard(std::string);
 };
