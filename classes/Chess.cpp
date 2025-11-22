@@ -726,20 +726,22 @@ uint64_t Chess::horizontalNeighbors(uint64_t bb) {
 // AI 
 void Chess::updateAI() 
 {
-    std::cout << "hey\n";
+    // std::cout << "hey\n";
     int bestVal = negInfite;
     BitMove bestMove;
     std::string state = stateString();
 
+    std::vector<BitMove> moves_ = generateAllCurrentMoves(state, _currentplayer);
     // Traverse all cells, evaluate minimax function for all empty cells
-    for (auto move : moves) {
+    for (auto move : moves_) {
+        // std::cout << "hey\n";
         char olddstPce = state[move.to];
         char srcPce = state[move.from];
 
         state[move.to] = srcPce;
         state[move.from] = '0';
         
-        int moveVal = -negamax(state, 1, negInfite, posInfite, WHITE);
+        int moveVal = -negamax(state, 5, negInfite, posInfite, WHITE);
         // Undo the move
         state[move.to] = olddstPce;
         state[move.from] = srcPce;
@@ -751,17 +753,21 @@ void Chess::updateAI()
         }
     }
 
-    int from_x = bestMove.from % 8;
-    int from_y = bestMove.from / 8;
+    std::cout << "from: " << (int) bestMove.from << " to: " << (int) bestMove.to << " with: " << (int) bestMove.piece << std::endl;
+   // if (bestMove) {
+		// TODO: Chess Square dropBitAtPoint
+        int fromint = bestMove.from;
+        int toint = bestMove.to;
+		auto fromSquare = _grid->getSquareByIndex(fromint);
+		auto toSquare = _grid->getSquareByIndex(toint);
 
-    int to_x = bestMove.to % 8;
-    int to_y = bestMove.to / 8;
+		auto fromBit = fromSquare->bit();
+		auto toPosition = toSquare->getPosition();
 
-    BitHolder *src = _grid->getSquare(to_x, to_y);
-    BitHolder *dst = _grid->getSquare(from_x, from_y);
-    Bit* _movedPiece = dst->bit();
-
-    bitMovedFromTo(*_movedPiece, *src, *dst);
+		toSquare->dropBitAtPoint(fromBit, toPosition);
+		fromSquare->setBit(nullptr);
+		bitMovedFromTo(*fromBit, *fromSquare, *toSquare);
+	// }
 }
 
 int Chess::negamax(std::string& state, int depth, int alpha, int beta, int playerColor) 
@@ -770,17 +776,18 @@ int Chess::negamax(std::string& state, int depth, int alpha, int beta, int playe
         return evaluateBoard(state) * playerColor; 
     }
     
+    std::vector<BitMove> moves_ = generateAllCurrentMoves(state, playerColor);
 
     int bestVal = -1000; // Min value
 
-    for (auto move : moves) {
+    for (auto move : moves_) {
         char olddstPce = state[move.to];
         char srcPce = state[move.from];
 
         state[move.to] = srcPce;
         state[move.from] = '0';
         
-        int moveVal = -negamax(state, depth - 1, 0, 0 , playerColor);
+        int moveVal = -negamax(state, depth - 1, -beta, -alpha, -playerColor);
         // Undo the move
         state[move.to] = olddstPce;
         state[move.from] = srcPce;
