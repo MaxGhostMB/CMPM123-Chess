@@ -323,8 +323,13 @@ void Chess::getPawnmoves() {
 
 void Chess::generateWhitePawnmoves(std::vector<BitMove>& moves, BitboardElement pawnBoard, uint64_t emptySquares, uint64_t enemySquares) {
     pawnBoard.forEachBit([&](int fromSquare) {
-        uint64_t forwardMask  = _WhitePawnmoves[fromSquare].getData(); 
-        uint64_t diagonalMask = horizontalNeighbors(forwardMask);
+        uint64_t forwardMask  = _WhitePawnmoves[fromSquare].getData();
+        // double push
+        uint64_t SinglePush = (1ULL << fromSquare) << 8;
+        // BitboardElement lowestBit_();
+        // lowestBit_.printBitboard();
+
+        uint64_t diagonalMask = horizontalNeighbors(forwardMask & SinglePush);
 
         uint64_t forwardMoves  = forwardMask  & emptySquares;
         uint64_t AlowedDiagonal = diagonalMask & enemySquares;
@@ -345,7 +350,10 @@ void Chess::generateWhitePawnmoves(std::vector<BitMove>& moves, BitboardElement 
 void Chess::generateBlackPawnmoves(std::vector<BitMove>& moves, BitboardElement pawnBoard, uint64_t emptySquares, uint64_t enemySquares) {
     pawnBoard.forEachBit([&](int fromSquare) {
         uint64_t forwardMask  = _BlackPawnmoves[fromSquare].getData(); 
-        uint64_t diagonalMask = horizontalNeighbors(forwardMask);
+
+        uint64_t SinglePush = (1ULL << fromSquare) >> 8;
+
+        uint64_t diagonalMask = horizontalNeighbors(forwardMask & SinglePush);
 
         uint64_t forwardMoves  = forwardMask  & emptySquares;
         uint64_t AlowedDiagonal = diagonalMask & enemySquares;
@@ -741,7 +749,7 @@ void Chess::updateAI()
         state[move.to] = srcPce;
         state[move.from] = '0';
         
-        int moveVal = -negamax(state, 5, negInfite, posInfite, WHITE);
+        int moveVal = -negamax(state, 4, negInfite, posInfite, WHITE);
         // Undo the move
         state[move.to] = olddstPce;
         state[move.from] = srcPce;
