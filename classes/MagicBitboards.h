@@ -1,6 +1,5 @@
-#pragma once
-// #ifndef MAGIC_BITBOARDS_H
-// #define MAGIC_BITBOARDS_H
+#ifndef MAGIC_BITBOARDS_H
+#define MAGIC_BITBOARDS_H
 
 #include <stdint.h>
 
@@ -829,7 +828,7 @@ static inline uint64_t getQueenAttacks(int square, uint64_t occupied) {
 }
 
 // Initialize magic bitboards
-inline void initMagicBitboards(void) {
+static inline void initMagicBitboards(void) {
     int square, i;
     uint64_t subset, index;
 
@@ -863,7 +862,7 @@ inline void initMagicBitboards(void) {
 }
 
 // Cleanup magic bitboard tables
-inline void cleanupMagicBitboards(void) {
+static inline void cleanupMagicBitboards(void) {
     int square;
     for (square = 0; square < 64; square++) {
         delete[] RAttacks[square];
@@ -871,4 +870,4 @@ inline void cleanupMagicBitboards(void) {
     }
 }
 
-// #endif // MAGIC_BITBOARDS_H
+#endif // MAGIC_BITBOARDS_H

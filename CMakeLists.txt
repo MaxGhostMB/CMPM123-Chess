@@ -48,6 +48,7 @@ else() # Linux
 endif()
 
 add_executable(demo Application.cpp
+                          classes/GameState.cpp
                           classes/Bitboard.h
                           classes/MagicBitboards.h
                           imgui/imgui_demo.cpp

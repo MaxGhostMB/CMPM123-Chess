@@ -16,69 +16,18 @@ enum ChessPiece
     King
 };
 
-class BitBoard {
+class BitboardElement {
   public:
     // Constructors
-    BitBoard()
+    BitboardElement()
         : _data(0) { }
-    BitBoard(uint64_t data)
+    BitboardElement(uint64_t data)
         : _data(data) { }
 
     // Getters and Setters
     uint64_t getData() const { return _data; }
     void setData(uint64_t data) { _data = data; }
 
-    BitBoard& operator|=(const uint64_t other) {
-        _data |= other;
-        return *this;
-    }
-
-    BitBoard& operator&=(const uint64_t other) {
-        _data &= other;
-        return *this;
-    }
-
-    BitBoard& operator^=(const uint64_t other) {
-        _data ^= other;
-        return *this;
-    }
-        
-    BitBoard operator<<(const int shift) const {
-        return BitBoard(_data << shift);
-    }
-    BitBoard operator>>(const int shift) const {
-        return BitBoard(_data >> shift);
-    }
-
-    bool anyCommonBits(const BitBoard& other) const {
-        return (_data & other._data) != 0;
-    }
-
-    BitBoard operator|(const BitBoard& other) const {
-        return BitBoard(_data | other._data);
-    }
-    BitBoard operator&(const BitBoard& other) const {
-        return BitBoard(_data & other._data);
-    }
-    BitBoard operator&(const uint64_t other) const {
-        return BitBoard(_data & other);
-    }
-    BitBoard& operator&=(const BitBoard& other) {
-        _data &= other._data;
-        return *this;
-    }
-    BitBoard& operator|=(const BitBoard& other) {
-        _data |= other._data;
-        return *this;
-    }
-    BitBoard operator~() const {
-        return BitBoard(~_data);
-    } 
-
-    const int firstBit() const {
-        return bitScanForward(_data);
-    }
-    
     // Method to loop through each bit in the element and perform an operation on it.
     template <typename Func>
     void forEachBit(Func func) const {
@@ -92,6 +41,20 @@ class BitBoard {
         }
     }
 
+    BitboardElement& operator|=(const uint64_t other) {
+        _data |= other;
+        return *this;
+    }
+
+    BitboardElement& operator&=(const uint64_t other) {
+        _data &= other;
+        return *this;
+    }
+
+    BitboardElement& operator^=(const uint64_t other) {
+        _data ^= other;
+        return *this;
+    }
 
     void printBitboard() {
         std::cout << "\n  a b c d e f g h\n";
@@ -109,8 +72,12 @@ class BitBoard {
             std::cout << std::flush;
         }
         std::cout << "  a b c d e f g h\n";
+        std::cout << "\n";
         std::cout << std::flush;
     }
+
+private:
+    uint64_t    _data;
 
     inline int bitScanForward(uint64_t bb) const {
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -122,8 +89,21 @@ class BitBoard {
 #endif
     };
 
-private:
-    uint64_t    _data;
-
 };
 
+struct BitMove {
+    uint8_t from;
+    uint8_t to;
+    uint8_t piece;
+    
+    BitMove(int from, int to, ChessPiece piece)
+        : from(from), to(to), piece(piece) { }
+        
+    BitMove() : from(0), to(0), piece(NoPiece) { }
+    
+    bool operator==(const BitMove& other) const {
+        return from == other.from && 
+               to == other.to && 
+               piece == other.piece;
+    }
+};

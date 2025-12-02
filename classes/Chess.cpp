@@ -52,7 +52,6 @@ void Chess::setUpBoard()
     initMagicBitboards();
     getKingmoves();
     getKnightmoves();
-    getPawnmoves();
 
     _grid->initializeChessSquares(pieceSize, "boardsquare.png");
     
@@ -210,14 +209,14 @@ void Chess::getKnightmoves() {
                 MoveBoard |= (1ULL << toSq);
             }
         }
-        BitboardElement _Move(MoveBoard);
+        BitBoard _Move(MoveBoard);
         _Knightmoves[sq] = _Move;
     }
 }
 
-void Chess::generateKnightmoves(std::vector<BitMove>& moves, BitboardElement knightBoard, uint64_t emptySquares) {
+void Chess::generateKnightmoves(std::vector<BitMove>& moves, BitBoard knightBoard, uint64_t emptySquares) {
     knightBoard.forEachBit([&](int fromSquare) {
-        BitboardElement moveBitboard = BitboardElement(_Knightmoves[fromSquare].getData() & emptySquares);
+        BitBoard moveBitboard = BitBoard(_Knightmoves[fromSquare].getData() & emptySquares);
         // moveBitboard.printBitboard();
         // Efficiently iterate through only the set bits
         moveBitboard.forEachBit([&](int toSquare) {
@@ -251,33 +250,33 @@ void Chess::getKingmoves() {
                 MoveBoard |= (1ULL << toSq);
             }
         }
-        BitboardElement _Move(MoveBoard);
+        BitBoard _Move(MoveBoard);
         _Kingmoves[sq] = _Move;
     }
 }
 
-void Chess::generateKingmoves(std::vector<BitMove>& moves, BitboardElement kingBoard, uint64_t emptySquares, int player) {
+void Chess::generateKingmoves(std::vector<BitMove>& moves, BitBoard kingBoard, uint64_t emptySquares, int player) {
     kingBoard.forEachBit([&](int fromSquare) {
         uint64_t moves_ = _Kingmoves[fromSquare].getData();
         int arr_i = player == WHITE ? 0 : 1;
 
-        if (!Kingsmoved[arr_i]) {
+        if (!_AIKingsmoved[arr_i]) {
             uint64_t KingSideMask = (player == WHITE) ? ((1ULL << 6) | (1ULL << 5)) : ((1ULL << 61) | (1ULL << 62));
             uint64_t QueenSideMask = (player == WHITE) ? ((1ULL << 1) | (1ULL << 2) | (1ULL << 3)) : ((1ULL << 57) | (1ULL << 58) | (1ULL << 59));
             
             bool KingSideCastle = (emptySquares & KingSideMask) == KingSideMask;
             bool QueenSideCastle = (emptySquares & QueenSideMask) == QueenSideMask;
 
-            if (QueenSideCastle && !Rooksmoved[arr_i]) {
+            if (QueenSideCastle && !_AIRooksmoved[arr_i]) {
                 int toSquare = (player == WHITE) ? 2 : 58;
-                moves.emplace_back(fromSquare, toSquare, King);
+                moves.emplace_back(fromSquare, toSquare, King, MoveFlags::QueenSideCastle);
             }
-            if (KingSideCastle && !Rooksmoved[(arr_i) + 2]) {
+            if (KingSideCastle && !_AIRooksmoved[(arr_i) + 2]) {
                 int toSquare = (player == WHITE) ? 6 : 62;
-                moves.emplace_back(fromSquare, toSquare, King);
+                moves.emplace_back(fromSquare, toSquare, King, MoveFlags::KingSideCastle);
             }
         }
-        BitboardElement moveBitboard = BitboardElement(_Kingmoves[fromSquare].getData() & emptySquares);
+        BitBoard moveBitboard = BitBoard(_Kingmoves[fromSquare].getData() & emptySquares);
         // Efficiently iterate through only the set bits
         moveBitboard.forEachBit([&](int toSquare) {
            moves.emplace_back(fromSquare, toSquare, King);
@@ -285,61 +284,33 @@ void Chess::generateKingmoves(std::vector<BitMove>& moves, BitboardElement kingB
     });
 }
 
-// pawn moves
-void Chess::getPawnmoves() {
-    _WhitePawnmoves.reserve(64);
-    _BlackPawnmoves.reserve(64);
-
-    int dir[] = { 1, 2 };
-
-    uint64_t WhiteMoveBoard;
-    uint64_t BlackMoveBoard;
-    // white:
-    for (int sq = 8 ; sq < 64; sq++) {
-        WhiteMoveBoard = 0ULL;
-        BlackMoveBoard = 0ULL;
-        int x = sq % 8;
-        int y = sq / 8;
-       
-        for (auto dy : dir) {
-            if (sq > 15 && dy == 2) {
-                continue;
-            }
-            int newY = y + dy;
-            // Check board bounds
-            if (newY >= 0 && newY < 8) {
-                int WtoSq = newY * 8 + x;
-                int BtoSq = WtoSq ^ 56; // flips board to produce black moves 
-                WhiteMoveBoard |= (1ULL << WtoSq);
-                BlackMoveBoard |= (1ULL << BtoSq);
-            }
-        }
-        BitboardElement _WMove(WhiteMoveBoard);
-        _WhitePawnmoves[sq] = _WMove;
-        BitboardElement _BMove(BlackMoveBoard);
-        _BlackPawnmoves[sq ^ 56] = _BMove;
-    }
-}
-
-void Chess::generateWhitePawnmoves(std::vector<BitMove>& moves, BitboardElement pawnBoard, uint64_t emptySquares, uint64_t enemySquares) {
+void Chess::generateWhitePawnmoves(std::vector<BitMove>& moves, BitBoard pawnBoard, uint64_t emptySquares, uint64_t enemySquares) {
     pawnBoard.forEachBit([&](int fromSquare) {
-        uint64_t forwardMask  = _WhitePawnmoves[fromSquare].getData();
-        // double push
+        uint64_t pawn_ = (1ULL << fromSquare);
+        uint64_t rank = rankMask << 8;
         uint64_t SinglePush = (1ULL << fromSquare) << 8;
-        // BitboardElement lowestBit_();
-        // lowestBit_.printBitboard();
 
-        uint64_t diagonalMask = horizontalNeighbors(forwardMask & SinglePush);
+        uint64_t east  = ((SinglePush) & ~FILE_H) << 1;
+        int64_t west  = ((SinglePush)& ~FILE_A) >> 1;
+        uint64_t diagonalMask = east | west;
 
-        uint64_t forwardMoves  = forwardMask  & emptySquares;
+        uint64_t forwardMoves  = SinglePush  & emptySquares;
+        if ((pawn_ & rank) != 0ULL && forwardMoves != 0ULL) {
+            forwardMoves |= ((1ULL << fromSquare) << 16); 
+        }
         uint64_t AlowedDiagonal = diagonalMask & enemySquares;
        
         // getting our en Passant move if one exists
         uint64_t enPassant = (enPassantSquare != -1) ? 1ULL << enPassantSquare : 0ULL;
         // does it overlap with 
-        AlowedDiagonal |= (enPassant & diagonalMask);
-
-        BitboardElement moveBitboard = BitboardElement(forwardMoves | AlowedDiagonal);
+        BitBoard enPassantmove = BitBoard(enPassant & diagonalMask);
+        
+        if (enPassantmove.firstBit() != -1) {
+            int to_ = enPassantmove.firstBit();
+            moves.emplace_back(fromSquare, to_, Pawn, MoveFlags::EnPassant);
+        }
+    
+        BitBoard moveBitboard = BitBoard(forwardMoves | AlowedDiagonal);
         // Efficiently iterate through only the set bits
         moveBitboard.forEachBit([&](int toSquare) {
            moves.emplace_back(fromSquare, toSquare, Pawn);
@@ -347,32 +318,44 @@ void Chess::generateWhitePawnmoves(std::vector<BitMove>& moves, BitboardElement 
     });
 }
 
-void Chess::generateBlackPawnmoves(std::vector<BitMove>& moves, BitboardElement pawnBoard, uint64_t emptySquares, uint64_t enemySquares) {
+void Chess::generateBlackPawnmoves(std::vector<BitMove>& moves, BitBoard pawnBoard, uint64_t emptySquares, uint64_t enemySquares) {
     pawnBoard.forEachBit([&](int fromSquare) {
-        uint64_t forwardMask  = _BlackPawnmoves[fromSquare].getData(); 
+        uint64_t pawn_ = (1ULL << fromSquare);
+        uint64_t rank = rankMask << 48;
 
         uint64_t SinglePush = (1ULL << fromSquare) >> 8;
 
-        uint64_t diagonalMask = horizontalNeighbors(forwardMask & SinglePush);
+        uint64_t east  = ((SinglePush) & ~FILE_H) << 1;
+        int64_t west  = ((SinglePush)& ~FILE_A) >> 1;
+        uint64_t diagonalMask = east | west;
 
-        uint64_t forwardMoves  = forwardMask  & emptySquares;
+        uint64_t forwardMoves  = SinglePush  & emptySquares;
+        if ((pawn_ & rank) != 0ULL && forwardMoves != 0ULL) {
+            forwardMoves |= ((1ULL << fromSquare) >> 16); 
+        }
         uint64_t AlowedDiagonal = diagonalMask & enemySquares;
         
         uint64_t enPassant = (enPassantSquare != -1) ? (1ULL << enPassantSquare) : 0ULL;
 
-        AlowedDiagonal |= (enPassant & diagonalMask);
-         
-        BitboardElement moveBitboard = BitboardElement(forwardMoves | AlowedDiagonal);
+        BitBoard enPassantmove = BitBoard(enPassant & diagonalMask);
+
+        if (enPassantmove.firstBit() != -1) {
+            int to_ = enPassantmove.firstBit();
+            moves.emplace_back(fromSquare, to_, Pawn, MoveFlags::EnPassant);
+        }
+
+        BitBoard moveBitboard = BitBoard(forwardMoves | AlowedDiagonal);
         // Efficiently iterate through only the set bits
         moveBitboard.forEachBit([&](int toSquare) {
-           moves.emplace_back(fromSquare, toSquare, Pawn);
+            
+            moves.emplace_back(fromSquare, toSquare, Pawn);
         });
     });
 }
 
-void Chess::generateBishopmoves(std::vector<BitMove>& moves, BitboardElement pieceboard, uint64_t occupied, uint64_t friendlies) {
+void Chess::generateBishopmoves(std::vector<BitMove>& moves, BitBoard pieceboard, uint64_t occupied, uint64_t friendlies) {
     pieceboard.forEachBit([&](int fromSquare) {
-        BitboardElement moveBitboard = BitboardElement(getBishopAttacks(fromSquare, occupied) & friendlies);
+        BitBoard moveBitboard = BitBoard(getBishopAttacks(fromSquare, occupied) & friendlies);
         // moveBitboard.printBitboard();
         // Efficiently iterate through only the set bits
         moveBitboard.forEachBit([&](int toSquare) {
@@ -381,9 +364,9 @@ void Chess::generateBishopmoves(std::vector<BitMove>& moves, BitboardElement pie
     });
 }
 
-void Chess::generateRookmoves(std::vector<BitMove>& moves, BitboardElement pieceboard, uint64_t occupied, uint64_t friendlies) {
+void Chess::generateRookmoves(std::vector<BitMove>& moves, BitBoard pieceboard, uint64_t occupied, uint64_t friendlies) {
     pieceboard.forEachBit([&](int fromSquare) {
-        BitboardElement moveBitboard = BitboardElement(getRookAttacks(fromSquare, occupied) & friendlies);
+        BitBoard moveBitboard = BitBoard(getRookAttacks(fromSquare, occupied) & friendlies);
         // moveBitboard.printBitboard();
         // Efficiently iterate through only the set bits
         moveBitboard.forEachBit([&](int toSquare) {
@@ -392,9 +375,9 @@ void Chess::generateRookmoves(std::vector<BitMove>& moves, BitboardElement piece
     });
 }
 
-void Chess::generateQueenmoves(std::vector<BitMove>& moves, BitboardElement pieceboard, uint64_t occupied, uint64_t friendlies) {
+void Chess::generateQueenmoves(std::vector<BitMove>& moves, BitBoard pieceboard, uint64_t occupied, uint64_t friendlies) {
     pieceboard.forEachBit([&](int fromSquare) {
-        BitboardElement moveBitboard = BitboardElement(getQueenAttacks(fromSquare, occupied) & friendlies);
+        BitBoard moveBitboard = BitBoard(getQueenAttacks(fromSquare, occupied) & friendlies);
         // moveBitboard.printBitboard();
         // Efficiently iterate through only the set bits
         moveBitboard.forEachBit([&](int toSquare) {
@@ -549,7 +532,7 @@ void Chess::makeMove(int from, int to, ChessPiece piece, int player) {
             Bit *rookPiece = PieceForPlayer(player, Rook);
 
             rookPiece->setPosition(newSq->getPosition());
-            rookPiece->setGameTag(player == WHITE ? Rook : Rook * BLACK);
+            rookPiece->setGameTag(player == WHITE ? Rook : Rook + 128);
             newSq->setBit(rookPiece);
 
             // update rook-moved flags
@@ -563,14 +546,19 @@ void Chess::makeMove(int from, int to, ChessPiece piece, int player) {
             moveRook(0, 56, 3, 59, idx);
     }
 
-    if (piece == Rook) {
-        Rooksmoved[idx]     = (player == WHITE ? from == 0  : from == 56);
+    if (piece == Rook && !Rooksmoved[idx]) {
+        Rooksmoved[idx] = (player == WHITE ? from == 0  : from == 56);
+    }
+
+    if (piece == Rook && !Rooksmoved[idx + 2]) {
         Rooksmoved[idx + 2] = (player == WHITE ? from == 7  : from == 63);
     }
 
     // En Passant 
-    bool isEnPassantCapture = (to == enPassantSquare);
-
+    bool isEnPassantCapture = false;
+    if (piece == Pawn) {
+        isEnPassantCapture = (to == enPassantSquare);
+    }
     // reset for next turn
     enPassantSquare = -1;
 
@@ -603,12 +591,23 @@ void Chess::makeMove(int from, int to, ChessPiece piece, int player) {
         capturedSq->setBit(nullptr);
     }
     // PrintChessBoards();
+
+    // for (int i = 0; i < 2; i++) {
+    //     std::string tf = (Kingsmoved[i]) ? "true" : "false";
+    //     std::cout << (((i == 0) ? "white King " : "black King ") + tf )<< std::endl; 
+    //     tf = ((Rooksmoved[i]) ? "true" : "false");
+    //     std::cout << ((i == 0) ? "white Rook Queenside " : "black Rook Queenside " ) + tf << std::endl; 
+    //     tf = ((Rooksmoved[i + 2]) ? "true" : "false");
+    //     std::cout << ((i == 0) ? "white Rook Kingside " : "black Rook Kingside " ) + tf << std::endl;
+    // }
 }
 
-std::vector<BitMove> Chess::generateAllCurrentMoves(std::string& state, int player) {
+std::vector<BitMove> Chess::generateAllCurrentMoves(std::string& state, int player, bool AI_FLAG) {
     // clear moves 
     ClearChessState();
     std::vector<BitMove> newMoves;
+
+    AI_FLAG ? CastlingState(state, _AIKingsmoved, _AIRooksmoved) : CastlingState(state, Kingsmoved, Rooksmoved);
 
     for (int i = 0; i < 64; i++) {
         char bit_ = state[i];
@@ -658,7 +657,7 @@ std::vector<BitMove> Chess::generateAllCurrentMoves(std::string& state, int play
                          | ChessState[BoardIndex(King, enemy)].getData() | ChessState[BoardIndex(Knight, enemy)].getData() 
                          | ChessState[BoardIndex(Bishop, enemy)].getData() | ChessState[BoardIndex(Queen, enemy)].getData());
     
-    BitboardElement enemy_(enemySqrs);
+    BitBoard enemy_(enemySqrs);
     // enemy_.printBitboard();
     
     uint64_t emptySqrs = ~((~friendlySqrs )| enemySqrs);
@@ -676,11 +675,6 @@ std::vector<BitMove> Chess::generateAllCurrentMoves(std::string& state, int play
     generateRookmoves(newMoves, ChessState[BoardIndex(Rook, player)], ~emptySqrs, friendlySqrs);
     generateQueenmoves(newMoves, ChessState[BoardIndex(Queen, player)], ~emptySqrs, friendlySqrs);
 
-    // int i = 1;
-    // for (auto move_ : newMoves) {
-    //     std::cout << "Move # " << i << " from: " << (int) move_.from << " to: " << (int) move_.to << " with: " << (int) move_.piece << std::endl;
-    //     i++;
-    // }
     return newMoves;
 }
 
@@ -732,9 +726,10 @@ uint64_t Chess::horizontalNeighbors(uint64_t bb) {
 
 
 // AI 
-void Chess::updateAI() 
-{
-    // std::cout << "hey\n";
+void Chess::updateAI() {
+    const auto searchStart = std::chrono::steady_clock::now();
+    _countMoves = 0;
+
     int bestVal = negInfite;
     BitMove bestMove;
     std::string state = stateString();
@@ -749,7 +744,7 @@ void Chess::updateAI()
         state[move.to] = srcPce;
         state[move.from] = '0';
         
-        int moveVal = -negamax(state, 4, negInfite, posInfite, WHITE);
+        int moveVal = -negamax(state, 11, negInfite, posInfite, WHITE);
         // Undo the move
         state[move.to] = olddstPce;
         state[move.from] = srcPce;
@@ -761,32 +756,38 @@ void Chess::updateAI()
         }
     }
 
-    std::cout << "from: " << (int) bestMove.from << " to: " << (int) bestMove.to << " with: " << (int) bestMove.piece << std::endl;
-   // if (bestMove) {
-		// TODO: Chess Square dropBitAtPoint
-        int fromint = bestMove.from;
-        int toint = bestMove.to;
-		auto fromSquare = _grid->getSquareByIndex(fromint);
-		auto toSquare = _grid->getSquareByIndex(toint);
-
-		auto fromBit = fromSquare->bit();
-		auto toPosition = toSquare->getPosition();
-
-		toSquare->dropBitAtPoint(fromBit, toPosition);
-		fromSquare->setBit(nullptr);
-		bitMovedFromTo(*fromBit, *fromSquare, *toSquare);
-	// }
+    //std::cout << "from: " << (int) bestMove.from << " to: " << (int) bestMove.to << " with: " << (int) bestMove.piece << std::endl;
+    // Make the best move
+    if(bestVal != negInfite) {
+        const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - searchStart).count();
+        const double boardsPerSecond = seconds > 0.0 ? static_cast<double>(_countMoves) / seconds : 0.0;
+        std::cout << "Moves checked: " << _countMoves
+                << " (" << std::fixed << std::setprecision(2) << boardsPerSecond
+                << " boards/s)" << std::defaultfloat << std::endl;
+        
+        int srcSquare = bestMove.from;
+        int dstSquare = bestMove.to;
+        BitHolder& src = getHolderAt(srcSquare&7, srcSquare/8);
+        BitHolder& dst = getHolderAt(dstSquare&7, dstSquare/8);
+        Bit* bit = src.bit();
+        dst.dropBitAtPoint(bit, ImVec2(0, 0));
+        src.setBit(nullptr);
+        bitMovedFromTo(*bit, src, dst);
+    }
 }
 
 int Chess::negamax(std::string& state, int depth, int alpha, int beta, int playerColor) 
 {
-    if (depth == 0){
-        return evaluateBoard(state) * playerColor; 
-    }
-    
-    std::vector<BitMove> moves_ = generateAllCurrentMoves(state, playerColor);
+    _countMoves++;
 
-    int bestVal = -1000; // Min value
+    if (depth == 0){
+        return evaluateBoard(state) * -playerColor; 
+    }
+    // std::cout << depth << std::endl;
+
+    std::vector<BitMove> moves_ = generateAllCurrentMoves(state, playerColor, true);
+
+    int bestVal = negInfite; // Min value
 
     for (auto move : moves_) {
         char olddstPce = state[move.to];
@@ -800,6 +801,11 @@ int Chess::negamax(std::string& state, int depth, int alpha, int beta, int playe
         state[move.to] = olddstPce;
         state[move.from] = srcPce;
 
+        alpha = std::max(moveVal, alpha);
+
+        if (alpha >= beta) { 
+            break;
+        }
         // If the value of the current move is more than the best value, update best
         if (moveVal > bestVal) {
             bestVal = moveVal;
@@ -810,26 +816,41 @@ int Chess::negamax(std::string& state, int depth, int alpha, int beta, int playe
 }
 
 int Chess::evaluateBoard(std::string state) {
-    int values[128];
-    values['P'] = 100;
-    values['N'] = 300;
-    values['B'] = 400;
-    values['R'] = 500;
-    values['Q'] = 900;
-    values['K'] = 2000;
-    values['p'] = -100;
-    values['n'] = -300;
-    values['b'] = -400;
-    values['r'] = -500;
-    values['q'] = -900;
-    values['k'] = -2000;
-    values['0'] = 0;
-
     int boardval = 0;
 
     for (int i = 0; i < 64; i++) {
-        char pice = state[i];
-        boardval += values[pice];
+        char c = state[i];
+        if (c == '0') continue; 
+
+        bool white = std::isupper(c);
+        int idx = white ? (i) : (i ^ 56);
+        int val = evaluateScores.at(std::toupper(c));
+
+        switch (std::toupper(c)) {
+            case 'P': 
+                val = pawnTable[idx];   
+                break;
+            case 'N': 
+                val = knightTable[idx]; 
+                break;
+            case 'B': 
+                val = bishopTable[idx]; 
+                break;
+            case 'R': 
+                val = rookTable[idx];   
+                break;
+            case 'Q': 
+                val = queenTable[idx];  
+                break;
+            case 'K': 
+                val = kingTable[idx];   
+                break;
+            default: 
+                continue;
+        }
+
+        boardval += white ? val : -val;
     }
+
     return boardval;
 }
