@@ -66,6 +66,16 @@ namespace ClassGame {
                         game = new Chess();
                         game->setUpBoard();
                     }
+                    if (ImGui::Button("Start Chess AI White")) {
+                        game = new Chess();
+                        game->setUpBoard();
+                        game->setAIPlayer(0);
+                    }
+                    if (ImGui::Button("Start Chess AI Black")) {
+                        game = new Chess();
+                        game->setUpBoard();
+                        game->setAIPlayer(1);
+                    }
                     char FEN_buffer[256] = ""; // Buffer to store the input text 
                     if (ImGui::InputText("Set up FEN string", FEN_buffer, sizeof(FEN_buffer))) {
                         game = new Chess();

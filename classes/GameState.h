@@ -131,18 +131,18 @@ public:
     std::vector<BitMove> generateAllMoves();
     void shutdown();
 private:
-    // const BitBoard generatePawnAttacks(const BitBoard pawns, char color);
-    // uint64_t generatePawnAttacksBitBoard(int square, char color);
+    const BitBoard generatePawnAttacks(const BitBoard pawns, char color);
+    uint64_t generatePawnAttacksBitBoard(int square, char color);
     
-    // void generateKnightMoves(std::vector<BitMove>& moves, BitBoard knightBoard, uint64_t occupancy);
-    // void generateKingMoves(std::vector<BitMove>& moves, BitBoard kingBoard, uint64_t occupancy);
-    // void generateRooksMoves(std::vector<BitMove>& moves, BitBoard bishopBoard, uint64_t occupancy, uint64_t friendlies);
-    // void generateQueensMoves(std::vector<BitMove>& moves, BitBoard bishopBoard, uint64_t occupancy, uint64_t friendlies);
+    void generateKnightMoves(std::vector<BitMove>& moves, BitBoard knightBoard, uint64_t occupancy);
+    void generateKingMoves(std::vector<BitMove>& moves, BitBoard kingBoard, uint64_t occupancy);
+    void generateRooksMoves(std::vector<BitMove>& moves, BitBoard bishopBoard, uint64_t occupancy, uint64_t friendlies);
+    void generateQueensMoves(std::vector<BitMove>& moves, BitBoard bishopBoard, uint64_t occupancy, uint64_t friendlies);
 
-    // void generateBishopMoves(std::vector<BitMove>& moves, BitBoard bishopBoard, uint64_t occupancy, uint64_t friendlies);
-    // void generatePawnMoveList(std::vector<BitMove>& moves, const BitBoard pawns, const BitBoard emptySquares, const BitBoard enemyPieces, char color);
-    // void addPawnBitboardMovesToList(std::vector<BitMove>& moves, const BitBoard bitboard, const int shift);
-    // bool isSquareAttacked(int square, char attackerColor, const BitBoard (&boards)[e_numBitboards]);
-    // void filterOutIllegalMoves(std::vector<BitMove>& moves);
+    void generateBishopMoves(std::vector<BitMove>& moves, BitBoard bishopBoard, uint64_t occupancy, uint64_t friendlies);
+    void generatePawnMoveList(std::vector<BitMove>& moves, const BitBoard pawns, const BitBoard emptySquares, const BitBoard enemyPieces, char color);
+    void addPawnBitboardMovesToList(std::vector<BitMove>& moves, const BitBoard bitboard, const int shift);
+    bool isSquareAttacked(int square, char attackerColor, const BitBoard (&boards)[e_numBitboards]);
+    void filterOutIllegalMoves(std::vector<BitMove>& moves);
 
 };

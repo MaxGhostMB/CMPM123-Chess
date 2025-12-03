@@ -14,8 +14,8 @@
 #define WHITE 1
 #define BLACK -1
 
-#define negInfite -1000000
-#define posInfite 1000000
+#define negInfite -100000000
+#define posInfite 100000000
 
 constexpr int pieceSize = 80;
 
@@ -84,6 +84,7 @@ private:
 
     // King
     void getKingmoves();
+    void filterOutIllegalMoves(std::vector<BitMove>& moves);
     void generateKingmoves(std::vector<BitMove>&, BitBoard, uint64_t, int);
     std::vector<BitBoard> _Kingmoves;
 
@@ -101,7 +102,7 @@ private:
     //board:
     BitBoard ChessBoard[12];
     // let 0-5 be white and 6-11 be black
-    BitBoard ChessState[13];
+    BitBoard ChessState[AllBitBoards::e_numBitboards];
 
     void ClearChessBoards();
     void ClearChessState();

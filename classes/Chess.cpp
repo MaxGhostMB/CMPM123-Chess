@@ -62,8 +62,10 @@ void Chess::setUpBoard()
     std::string _currentstate = stateString();
     moves = generateAllCurrentMoves(_currentstate, _currentplayer);
 
-    if (gameHasAI()) {
-        setAIPlayer(AI_PLAYER);
+    if (gameHasAI()){
+        if (_gameOptions.AIPlayer == 1) {
+            setAIPlayer(1);
+        }
     }
 
     startGame();
@@ -296,7 +298,7 @@ void Chess::generateWhitePawnmoves(std::vector<BitMove>& moves, BitBoard pawnBoa
 
         uint64_t forwardMoves  = SinglePush  & emptySquares;
         if ((pawn_ & rank) != 0ULL && forwardMoves != 0ULL) {
-            forwardMoves |= ((1ULL << fromSquare) << 16); 
+            forwardMoves |= ((1ULL << fromSquare) << 16) & emptySquares;
         }
         uint64_t AlowedDiagonal = diagonalMask & enemySquares;
        
@@ -331,7 +333,7 @@ void Chess::generateBlackPawnmoves(std::vector<BitMove>& moves, BitBoard pawnBoa
 
         uint64_t forwardMoves  = SinglePush  & emptySquares;
         if ((pawn_ & rank) != 0ULL && forwardMoves != 0ULL) {
-            forwardMoves |= ((1ULL << fromSquare) >> 16); 
+            forwardMoves |= ((1ULL << fromSquare) >> 16) & emptySquares; 
         }
         uint64_t AlowedDiagonal = diagonalMask & enemySquares;
         
@@ -602,6 +604,85 @@ void Chess::makeMove(int from, int to, ChessPiece piece, int player) {
     // }
 }
 
+// void Chess::filterOutIllegalMoves(std::vector<BitMove>& moves) {
+// 	if (moves.empty()) return;
+
+// 	const char myColor = _currentplayer;
+// 	const char opponentColor = (_currentplayer == WHITE) ? BLACK : WHITE;
+// 	const int myKingIdx = (myColor == WHITE) ? WHITE_KING : BLACK_KING;
+
+// 	// Remove moves that leave the king in check
+// 	moves.erase(std::remove_if(moves.begin(), moves.end(), [&](const BitMove& move) {
+		
+// 		// Create a temporary copy of the board state
+// 		BitBoard tempBoards[e_numBitboards];
+// 		for (int i = 0; i < e_numBitboards; ++i) tempBoards[i] = _bitboards[i];
+
+// 		// Apply the move to the temporary boards
+// 		// Note: We just need occupancy correct for check detection.
+		
+// 		const uint64_t fromMask = 1ULL << move.from;
+// 		const uint64_t toMask   = 1ULL << move.to;
+		
+// 		// Helper to determine which bitboard a piece belongs to
+// 		auto getPieceIdx = [&](ChessPiece p, char c) {
+// 			if (p == Pawn) return c == WHITE ? WHITE_PAWNS : BLACK_PAWNS;
+// 			if (p == Knight) return c == WHITE ? WHITE_KNIGHTS : BLACK_KNIGHTS;
+// 			if (p == Bishop) return c == WHITE ? WHITE_BISHOPS : BLACK_BISHOPS;
+// 			if (p == Rook) return c == WHITE ? WHITE_ROOKS : BLACK_ROOKS;
+// 			if (p == Queen) return c == WHITE ? WHITE_QUEENS : BLACK_QUEENS;
+// 			return c == WHITE ? WHITE_KING : BLACK_KING; // King
+// 		};
+
+// 		int moverIdx = getPieceIdx(static_cast<ChessPiece>(move.piece), myColor);
+		
+// 		// Remove from 'from'
+// 		tempBoards[moverIdx] &= ~fromMask;
+// 		tempBoards[OCCUPANCY] &= ~fromMask;
+
+// 		// Handle Captures (Remove opponent piece at 'to')
+// 		// We scan opponent boards to find what was captured (slower than lookup, but safe for generic bitboards)
+// 		int startOpp = (opponentColor == WHITE) ? WHITE_PAWNS : BLACK_PAWNS;
+// 		int endOpp   = (opponentColor == WHITE) ? WHITE_KING : BLACK_KING;
+		
+// 		// Specialized handling for En Passant
+// 		if (move.flags & EnPassant) {
+// 			int capSq = (myColor == WHITE) ? (move.to - 8) : (move.to + 8);
+// 			uint64_t capMask = 1ULL << capSq;
+// 			tempBoards[startOpp] &= ~capMask; // Opponent Pawns
+// 			tempBoards[OCCUPANCY] &= ~capMask;
+// 		} else {
+// 			// Standard capture
+// 			for (int i = startOpp; i <= endOpp; ++i) {
+// 				tempBoards[i] &= ~toMask;
+// 			}
+// 			tempBoards[OCCUPANCY] &= ~toMask; // Clear strictly to ensure no overlap before adding
+// 		}
+
+// 		// Handle Promotion
+// 		if ((move.flags & IsPromotion)) {
+// 			moverIdx = getPieceIdx(Queen, myColor); // Assume Queen promotion for check safety (mostly covers it)
+// 		}
+
+// 		// Add to 'to'
+// 		tempBoards[moverIdx] |= toMask;
+// 		tempBoards[OCCUPANCY] |= toMask;
+
+// 		// Handle King Move (Update King Index tracking)
+// 		int currentKingSquare = -1;
+// 		if (move.piece == King) {
+// 			currentKingSquare = move.to;
+// 		} else {
+// 			// If king didn't move, find him
+// 			currentKingSquare = tempBoards[myKingIdx].firstBit();
+// 		}
+
+// 		// If the King is attacked by the opponent after this move, the move is illegal.
+// 		return isSquareAttacked(currentKingSquare, opponentColor, tempBoards);
+
+// 	}), moves.end());
+// }
+
 std::vector<BitMove> Chess::generateAllCurrentMoves(std::string& state, int player, bool AI_FLAG) {
     // clear moves 
     ClearChessState();
@@ -657,8 +738,6 @@ std::vector<BitMove> Chess::generateAllCurrentMoves(std::string& state, int play
                          | ChessState[BoardIndex(King, enemy)].getData() | ChessState[BoardIndex(Knight, enemy)].getData() 
                          | ChessState[BoardIndex(Bishop, enemy)].getData() | ChessState[BoardIndex(Queen, enemy)].getData());
     
-    BitBoard enemy_(enemySqrs);
-    // enemy_.printBitboard();
     
     uint64_t emptySqrs = ~((~friendlySqrs )| enemySqrs);
 
@@ -744,7 +823,7 @@ void Chess::updateAI() {
         state[move.to] = srcPce;
         state[move.from] = '0';
         
-        int moveVal = -negamax(state, 11, negInfite, posInfite, WHITE);
+        int moveVal = -negamax(state, 8, negInfite, posInfite, AI_PLAYER == 1 ? WHITE : BLACK);
         // Undo the move
         state[move.to] = olddstPce;
         state[move.from] = srcPce;
@@ -824,7 +903,7 @@ int Chess::evaluateBoard(std::string state) {
 
         bool white = std::isupper(c);
         int idx = white ? (i) : (i ^ 56);
-        int val = evaluateScores.at(std::toupper(c));
+        int val; // = (white) ? evaluateScores.at(std::toupper(c)) : -evaluateScores.at(std::toupper(c));
 
         switch (std::toupper(c)) {
             case 'P': 
