@@ -102,7 +102,9 @@ private:
     //board:
     BitBoard ChessBoard[12];
     // let 0-5 be white and 6-11 be black
-    BitBoard ChessState[AllBitBoards::e_numBitboards];
+    BitBoard ChessState[12];
+
+    GameState _gamestate;
 
     void ClearChessBoards();
     void ClearChessState();
@@ -142,8 +144,8 @@ private:
     // AI stuff
 
     void updateAI() override;
-    int negamax(std::string& state, int depth, int alpha, int beta, int playerColor);
-    int evaluateBoard(std::string);
+    int negamax(GameState gamestate, int depth, int alpha, int beta);
+    int evaluateBoard(GameState);
 
     // AICastling
 
@@ -183,15 +185,16 @@ private:
         if (state[63] != 'r')
             _AIRooksmoved[3] = true;
     }
-    
-    const std::map<char, int> evaluateScores = {
-        {'P', 100},
-        {'N', 200},
-        {'B', 230},
-        {'R', 400},
-        {'Q', 900},
-        {'K', 2000}
+
+    const std::map<ChessPiece, int> evaluateScores = {
+        {Pawn, 100},
+        {Knight, 200},
+        {Bishop, 230},
+        {Rook, 400},
+        {Queen, 900},
+        {King, 2000}
     };
+
     
 };
 
