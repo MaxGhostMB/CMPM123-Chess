@@ -73,28 +73,28 @@ private:
     // set up bitboards for king, knight and pawns
     // generate their moves
     // 
-    std::vector<BitMove> generateAllCurrentMoves(std::string&, int, bool AI_FLAG = false);
+    // std::vector<BitMove> generateAllCurrentMoves(std::string&, int, bool AI_FLAG = false);
 
     void makeMove(int, int, ChessPiece, int);
 
     // knight
-    void getKnightmoves();
-    void generateKnightmoves(std::vector<BitMove>&, BitBoard, uint64_t);
-    std::vector<BitBoard> _Knightmoves;
+    // void getKnightmoves();
+    // void generateKnightmoves(std::vector<BitMove>&, BitBoard, uint64_t);
+    // std::vector<BitBoard> _Knightmoves;
 
-    // King
-    void getKingmoves();
-    void filterOutIllegalMoves(std::vector<BitMove>& moves);
-    void generateKingmoves(std::vector<BitMove>&, BitBoard, uint64_t, int);
-    std::vector<BitBoard> _Kingmoves;
+    // // King
+    // void getKingmoves();
+    // void filterOutIllegalMoves(std::vector<BitMove>& moves);
+    // void generateKingmoves(std::vector<BitMove>&, BitBoard, uint64_t, int);
+    // std::vector<BitBoard> _Kingmoves;
 
-    // pawns
-    void generateWhitePawnmoves(std::vector<BitMove>&, BitBoard, uint64_t, uint64_t);
-    void generateBlackPawnmoves(std::vector<BitMove>&, BitBoard, uint64_t, uint64_t);
+    // // pawns
+    // void generateWhitePawnmoves(std::vector<BitMove>&, BitBoard, uint64_t, uint64_t);
+    // void generateBlackPawnmoves(std::vector<BitMove>&, BitBoard, uint64_t, uint64_t);
 
-    void generateBishopmoves(std::vector<BitMove>&, BitBoard, uint64_t, uint64_t);
-    void generateRookmoves(std::vector<BitMove>&, BitBoard, uint64_t, uint64_t);
-    void generateQueenmoves(std::vector<BitMove>&, BitBoard, uint64_t, uint64_t);
+    // void generateBishopmoves(std::vector<BitMove>&, BitBoard, uint64_t, uint64_t);
+    // void generateRookmoves(std::vector<BitMove>&, BitBoard, uint64_t, uint64_t);
+    // void generateQueenmoves(std::vector<BitMove>&, BitBoard, uint64_t, uint64_t);
     
 
     std::vector<BitMove> moves;
@@ -112,10 +112,10 @@ private:
     int ArrIndex(int);
 
     //debug :)
-    void PrintChessBoards();
+    // void PrintChessBoards();
 
     // Pawn helpers 
-    uint64_t horizontalNeighbors(uint64_t bb);
+    // uint64_t horizontalNeighbors(uint64_t bb);
     int enPassantSquare = -1;
 
     int _countMoves;
