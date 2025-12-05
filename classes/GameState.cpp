@@ -54,12 +54,12 @@ void GameState::shutdown() {
     cleanupMagicBitboards();
 }
 
-void GameState::addPawnBitboardMovesToList(std::vector<BitMove>& moves, const BitBoard bitboard, const int shift) {
+void GameState::addPawnBitboardMovesToList(std::vector<BitMove>& moves, const BitBoard bitboard, const int shift, MoveFlags flag_) {
     if (bitboard.getData() == 0)
         return;
     bitboard.forEachBit([&](int toSquare) {
         int fromSquare = toSquare - shift; // Correct calculation for fromSquare
-        moves.emplace_back(fromSquare, toSquare, Pawn);
+        moves.emplace_back(fromSquare, toSquare, Pawn, flag_);
     });
 }
 
@@ -78,13 +78,19 @@ void GameState::generatePawnMoveList(std::vector<BitMove>& moves, const BitBoard
     BitBoard capturesLeft = (color == WHITE) ? ((pawns.getData() & NotAFile) << 7) & enemyPieces.getData() : ((pawns.getData() & NotAFile) >> 9) & enemyPieces.getData();
     BitBoard capturesRight = (color == WHITE) ? ((pawns.getData() & NotHFile) << 9) & enemyPieces.getData() : ((pawns.getData() & NotHFile) >> 7) & enemyPieces.getData();
 
+    BitBoard Promotion_ = (color == WHITE) ? (singleMoves.getData() & (rankMask << 56)) : (singleMoves.getData() & (rankMask));
+
+    singleMoves &= ~Promotion_;
+    
     int shiftForward = (color == WHITE) ? 8 : -8;
     int doubleShift = (color == WHITE) ? 16 : -16;
     int captureLeftShift = (color == WHITE) ? 7 : -9;
     int captureRightShift = (color == WHITE) ? 9 : -7;
-    
+
     // Add single pawn moves to the list
     addPawnBitboardMovesToList(moves, singleMoves, shiftForward);
+    addPawnBitboardMovesToList(moves, Promotion_, shiftForward, IsPromotion);
+
 
     // Add double pawn moves to the list
     addPawnBitboardMovesToList(moves, doubleMoves, doubleShift);

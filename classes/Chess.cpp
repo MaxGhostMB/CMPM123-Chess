@@ -65,6 +65,7 @@ void Chess::setUpBoard()
     _gamestate.init(_currentstate.c_str() , _currentplayer );
 
     moves = _gamestate.generateAllMoves();// generateAllCurrentMoves(_currentstate, _currentplayer);
+    // evaluateBoard(_gamestate);
 
     if (gameHasAI()){
         if (_gameOptions.AIPlayer == 1) {
@@ -740,58 +741,6 @@ uint64_t Chess::horizontalNeighbors(uint64_t bb) {
 
 
 // AI 
-// void Chess::updateAI() {
-//     const auto searchStart = std::chrono::steady_clock::now();
-//     _countMoves = 0;
-
-//     int bestVal = negInfite;
-//     BitMove bestMove;
-//     std::string state = stateString();
-
-
-
-//     std::vector<BitMove> moves_ = generateAllCurrentMoves(state, _currentplayer);
-//     // Traverse all cells, evaluate minimax function for all empty cells
-//     for (auto move : moves_) {
-//         // std::cout << "hey\n";
-//         char olddstPce = state[move.to];
-//         char srcPce = state[move.from];
-
-//         state[move.to] = srcPce;
-//         state[move.from] = '0';
-        
-//         int moveVal = -negamax(state, 4, negInfite, posInfite, _currentplayer);
-//         // Undo the move
-//         state[move.to] = olddstPce;
-//         state[move.from] = srcPce;
-
-//         // If the value of the current move is more than the best value, update best
-//         if (moveVal > bestVal) {
-//             bestMove = move;
-//             bestVal = moveVal;
-//         }
-//     }
-
-//     //std::cout << "from: " << (int) bestMove.from << " to: " << (int) bestMove.to << " with: " << (int) bestMove.piece << std::endl;
-//     // Make the best move
-//     if(bestVal != negInfite) {
-//         const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - searchStart).count();
-//         const double boardsPerSecond = seconds > 0.0 ? static_cast<double>(_countMoves) / seconds : 0.0;
-//         std::cout << "Moves checked: " << _countMoves
-//                 << " (" << std::fixed << std::setprecision(2) << boardsPerSecond
-//                 << " boards/s)" << std::defaultfloat << std::endl;
-        
-//         int srcSquare = bestMove.from;
-//         int dstSquare = bestMove.to;
-//         BitHolder& src = getHolderAt(srcSquare&7, srcSquare/8);
-//         BitHolder& dst = getHolderAt(dstSquare&7, dstSquare/8);
-//         Bit* bit = src.bit();
-//         dst.dropBitAtPoint(bit, ImVec2(0, 0));
-//         src.setBit(nullptr);
-//         bitMovedFromTo(*bit, src, dst);
-//     }
-// }
-
 void Chess::updateAI() {
     const auto searchStart = std::chrono::steady_clock::now();
     _countMoves = 0;
@@ -803,7 +752,7 @@ void Chess::updateAI() {
         // std::cout << "hey\n";
         _gamestate.pushMove(move);
         
-        int moveVal = -negamax(_gamestate, 7, negInfite, posInfite);
+        int moveVal = -negamax(_gamestate, 5, negInfite, posInfite);
         // Undo the move
         _gamestate.popState();
         // If the value of the current move is more than the best value, update best
@@ -816,12 +765,12 @@ void Chess::updateAI() {
     //std::cout << "from: " << (int) bestMove.from << " to: " << (int) bestMove.to << " with: " << (int) bestMove.piece << std::endl;
     // Make the best move
     if(bestVal != negInfite) {
-        // std::cout << bestVal << std::endl;
-        // const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - searchStart).count();
-        // const double boardsPerSecond = seconds > 0.0 ? static_cast<double>(_countMoves) / seconds : 0.0;
-        // std::cout << "Moves checked: " << _countMoves
-        //         << " (" << std::fixed << std::setprecision(2) << boardsPerSecond
-        //         << " boards/s)" << std::defaultfloat << std::endl;
+        std::cout << bestVal << std::endl;
+        const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - searchStart).count();
+        const double boardsPerSecond = seconds > 0.0 ? static_cast<double>(_countMoves) / seconds : 0.0;
+        std::cout << "Moves checked: " << _countMoves
+                << " (" << std::fixed << std::setprecision(2) << boardsPerSecond
+                << " boards/s)" << std::defaultfloat << std::endl;
         
         int srcSquare = bestMove.from;
         int dstSquare = bestMove.to;
@@ -834,45 +783,9 @@ void Chess::updateAI() {
     }
 }
 
-
-// int Chess::negamax(std::string& state, int depth, int alpha, int beta, int playerColor) 
-// {
-//     _countMoves++;
-
-//     if (depth == 0){
-//         return evaluateBoard(state) * - playerColor; 
-//     }
-//     // std::cout << depth << std::endl;
-
-//     std::vector<BitMove> moves_ = generateAllCurrentMoves(state, playerColor, true);
-
-//     int bestVal = negInfite; // Min value
-
-//     for (auto move : moves_) {
-//         char olddstPce = state[move.to];
-//         char srcPce = state[move.from];
-
-//         state[move.to] = srcPce;
-//         state[move.from] = '0';
-        
-//         bestVal = std::max( bestVal, -negamax(state, depth - 1, -beta, -alpha, -playerColor));
-//         // Undo the move
-//         state[move.to] = olddstPce;
-//         state[move.from] = srcPce;
-
-//         alpha = std::max(bestVal, alpha);
-
-//         if (alpha >= beta) { 
-//             break;
-//         }
-//     }
-
-//     return bestVal;
-// }
-
 int Chess::negamax(GameState gamestate, int depth, int alpha, int beta) 
 {
-    //_countMoves++;
+    _countMoves++;
 
     if (depth == 0){
         return evaluateBoard(gamestate); 
@@ -898,71 +811,20 @@ int Chess::negamax(GameState gamestate, int depth, int alpha, int beta)
     return bestVal;
 }
 
-/*
-    const std::map<char, int> evaluateScores = {
-        {'P', 100},
-        {'N', 200},
-        {'B', 230},
-        {'R', 400},
-        {'Q', 900},
-        {'K', 2000}
-    };
-*/
-// int Chess::evaluateBoard(std::string state) {
-//     int boardval = 0;
-
-//     for (int i = 0; i < 64; i++) {
-//         char c = state[i];
-//         if (c == '0') continue; 
-
-//         bool white = std::isupper(c);
-//         int idx = white ? (i) : (i ^ 56);
-//         int val; // = (white) ? evaluateScores.at(std::toupper(c)) : -evaluateScores.at(std::toupper(c));
-
-//         switch (std::toupper(c)) {
-//             case 'P': 
-//                 val = pawnTable[idx] + 100;   
-//                 break;
-//             case 'N': 
-//                 val = knightTable[idx] + 200; 
-//                 break;
-//             case 'B': 
-//                 val = bishopTable[idx] + 230; 
-//                 break;
-//             case 'R': 
-//                 val = rookTable[idx] + 400;   
-//                 break;
-//             case 'Q': 
-//                 val = queenTable[idx] + 900;  
-//                 break;
-//             case 'K': 
-//                 val = kingTable[idx] + 2000;   
-//                 break;
-//             default: 
-//                 continue;
-//         }
-
-//         boardval += white ? val : -val;
-//     }
-
-//     return boardval;
-// }
-
 int Chess::evaluateBoard(GameState state) {
-    int score;
+    int score = 0;
     for (int i = 0; i < 13; i++) {
         if (i == 6) continue;
-		// To simplify my statements a bit, I'll be adding the passes
-		// after I calculate their score, so I can subtract if black and add if white.
         BitBoard board = state._bitboards[i];
         int get_piece = (i < 6) ? i + 1 : i - 6;
 		ChessPiece piece = (ChessPiece) get_piece;
-		bool black = i < 6; 
+		bool black = i > 6; 
 
 		// Add up scores of each piece, ignoring position.
-		int passScore = evaluateScores.at(piece) * countOnes(board.getData());
+		int passScore = (black ? -evaluateScores.at(piece) : evaluateScores.at(piece)) * countOnes(board.getData());
 
         board.forEachBit([&passScore, &black, &piece](int pos) {
+            int val = 0;
             int truePos = pos;
             if (black) {
 				truePos = pos ^ 56;
@@ -971,29 +833,30 @@ int Chess::evaluateBoard(GameState state) {
 
 			switch(piece) {
 				case Pawn:
-					passScore += pawnTable[truePos];
+					val = pawnTable[truePos];
 					break;
 				case Knight:
-					passScore += knightTable[truePos];
+					val = knightTable[truePos];
 					break;
 				case Bishop:
-					passScore += bishopTable[truePos];
+					val = bishopTable[truePos];
 					break;
 				case Rook:
-					passScore += rookTable[truePos];
+					val = rookTable[truePos];
 					break;
 				case Queen:
-					passScore += queenTable[truePos];
+					val = queenTable[truePos];
 					break;
                 case King:
-                    passScore += kingTable[truePos];
+                    val = kingTable[truePos];
                     break;
                 default:
                     break;
 			}
+            passScore += val;
 		});
         score += black ? -passScore : passScore;
     }
-
-	return score * state.color;
+    // std::cout << score << std::endl;
+	return score; //* state.color;
 }

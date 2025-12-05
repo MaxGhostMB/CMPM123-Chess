@@ -39,6 +39,7 @@ enum AllBitBoards
 };
 
 enum MoveFlags {
+    NO_FLAG = 0,
     EnPassant = 0x01, // 0000 0001
     IsCapture = 0x02, // 0000 0010
     KingSideCastle = 0x04, // 0000 0100
@@ -91,7 +92,7 @@ public:
 
     GameState() : stackPtr(0) { }
 
-    void init(const char* newState, char player);
+    void init(const char* newState, char player /*/, bool* AIking, bool* AIrooks*/);
 
     inline void pushMove(const BitMove& move) {
         pushState();
@@ -141,8 +142,9 @@ private:
 
     void generateBishopMoves(std::vector<BitMove>& moves, BitBoard bishopBoard, uint64_t occupancy, uint64_t friendlies);
     void generatePawnMoveList(std::vector<BitMove>& moves, const BitBoard pawns, const BitBoard emptySquares, const BitBoard enemyPieces, char color);
-    void addPawnBitboardMovesToList(std::vector<BitMove>& moves, const BitBoard bitboard, const int shift);
+    void addPawnBitboardMovesToList(std::vector<BitMove>& moves, const BitBoard bitboard, const int shift, MoveFlags flag_ = NO_FLAG);
     bool isSquareAttacked(int square, char attackerColor, const BitBoard (&boards)[e_numBitboards]);
     void filterOutIllegalMoves(std::vector<BitMove>& moves);
 
+    uint64_t rankMask = 0x00000000000000FFULL;
 };
