@@ -78,9 +78,9 @@ void GameState::generatePawnMoveList(std::vector<BitMove>& moves, const BitBoard
     BitBoard capturesLeft = (color == WHITE) ? ((pawns.getData() & NotAFile) << 7) & enemyPieces.getData() : ((pawns.getData() & NotAFile) >> 9) & enemyPieces.getData();
     BitBoard capturesRight = (color == WHITE) ? ((pawns.getData() & NotHFile) << 9) & enemyPieces.getData() : ((pawns.getData() & NotHFile) >> 7) & enemyPieces.getData();
 
-    BitBoard Promotion_ = (color == WHITE) ? (singleMoves.getData() & (rankMask << 56)) : (singleMoves.getData() & (rankMask));
+    // BitBoard Promotion_ = (color == WHITE) ? (singleMoves.getData() & (rankMask << 56)) : (singleMoves.getData() & (rankMask));
 
-    singleMoves &= ~Promotion_;
+    // singleMoves &= ~Promotion_;
     
     int shiftForward = (color == WHITE) ? 8 : -8;
     int doubleShift = (color == WHITE) ? 16 : -16;
@@ -89,7 +89,7 @@ void GameState::generatePawnMoveList(std::vector<BitMove>& moves, const BitBoard
 
     // Add single pawn moves to the list
     addPawnBitboardMovesToList(moves, singleMoves, shiftForward);
-    addPawnBitboardMovesToList(moves, Promotion_, shiftForward, IsPromotion);
+    // addPawnBitboardMovesToList(moves, Promotion_, shiftForward, IsPromotion);
 
 
     // Add double pawn moves to the list
